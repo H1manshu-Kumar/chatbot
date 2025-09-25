@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Excel Chatbot</title>
+</head>
+<body>
+  <h3>Upload Excel</h3>
+  <input id="file" type="file" accept=".xlsx,.xls"/>
+  <button onclick="upload()">Upload</button>
+  <div id="status"></div>
+
+  <h3>Ask</h3>
+  <input id="msg" placeholder="Type a question" style="width:60%"/>
+  <button onclick="ask()">Send</button>
+
+  <div id="chat"></div>
+
+<script>
+async function upload() {
+  const f = document.getElementById('file').files[0];
+  if(!f){ alert('choose file'); return; }
+  const fd = new FormData();
+  fd.append('file', f);
+  const res = await fetch('/upload_excel', { method:'POST', body: fd });
+  const j = await res.json();
+  document.getElementById('status').textContent = JSON.stringify(j);
+}
+async function ask(){
+  const msg = document.getElementById('msg').value;
+  const res = await fetch('/chat', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({message: msg, top_k:3})
+  });
+  const j = await res.json();
+  const c = document.getElementById('chat');
+  c.innerHTML += '<div><b>You:</b> '+msg+'</div>';
+  if(j.answers){
+    j.answers.forEach(a => {
+      c.innerHTML += `<div><b>Bot:</b> ${a.answer} <small>(score:${a.score.toFixed(3)})</small></div>`;
+    })
+  } else if(j.answer){
+    c.innerHTML += `<div><b>Bot:</b> ${j.answer}</div>`;
+  } else {
+    c.innerHTML += '<div><i>No answer</i></div>';
+  }
+  c.innerHTML += '<hr/>';
+}
+</script>
+</body>
+</html>

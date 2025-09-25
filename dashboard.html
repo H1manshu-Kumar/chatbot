@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Assistant - Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .logo { font-size: 1.5em; font-weight: bold; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.3); }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            height: calc(100vh - 80px);
+        }
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            height: fit-content;
+        }
+        .chat-area {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .upload-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .upload-area {
+            border: 2px dashed #e1e5e9;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            transition: border-color 0.3s;
+            margin-bottom: 20px;
+        }
+        .upload-area.dragover { border-color: #667eea; background: #f8f9ff; }
+        .file-input {
+            display: none;
+        }
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .upload-btn:hover { transform: translateY(-2px); }
+        .file-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        .message-content {
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            line-height: 1.4;
+        }
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .message.bot .message-content {
+            background: #f1f3f4;
+            color: #333;
+        }
+        .avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .user .avatar { background: #667eea; color: white; }
+        .bot .avatar { background: #e8f5e8; color: #4caf50; }
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid #e1e5e9;
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 2px solid #e1e5e9;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .chat-input:focus { border-color: #667eea; }
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .send-btn:hover { transform: translateY(-2px); }
+        .send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .stat-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number { font-size: 1.5em; font-weight: bold; color: #667eea; }
+        .stat-label { font-size: 0.9em; color: #666; }
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🤖 AI Assistant Dashboard</div>
+        <div class="user-info">
+            <span>Welcome, <span id="username"></span></span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="upload-section">
+                <h3>📁 Data Source</h3>
+                <div class="upload-area" id="uploadArea">
+                    <div style="font-size: 2em; margin-bottom: 10px;">📊</div>
+                    <p>Drag & drop your data file here</p>
+                    <p style="margin: 10px 0;">or</p>
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                        Choose File
+                    </button>
+                    <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" onchange="loadFile()">
+                </div>
+                <div id="fileInfo" style="display: none;"></div>
+                <div class="stats" id="stats" style="display: none;">
+                    <div class="stat-item">
+                        <div class="stat-number" id="rowCount">0</div>
+                        <div class="stat-label">Rows</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="colCount">0</div>
+                        <div class="stat-label">Columns</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-area">
+            <div class="chat-header">
+                <h2>🤖 AI Assistant</h2>
+                <p>Ask questions about your data</p>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <div class="avatar">🤖</div>
+                    <div class="message-content">
+                        Hello! Upload a data file to get started. I'll help you analyze and query your data.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" class="chat-input" 
+                       placeholder="Ask a question about your data..." 
+                       disabled onkeypress="handleKeyPress(event)">
+                <button id="sendBtn" class="send-btn" onclick="sendMessage()" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is logged in
+        if (sessionStorage.getItem('loggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+        
+        document.getElementById('username').textContent = sessionStorage.getItem('username') || 'User';
+        
+        let excelData = [];
+        let headers = [];
+        
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+        
+        // Drag and drop functionality
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                loadFile();
+            }
+        });
+        
+        function loadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    excelData = jsonData;
+                    headers = Object.keys(jsonData[0] || {});
+                    
+                    // Update UI
+                    document.getElementById('fileInfo').innerHTML = `
+                        <div class="file-info">
+                            <strong>✅ ${file.name}</strong><br>
+                            <small>Loaded successfully</small>
+                        </div>
+                    `;
+                    document.getElementById('fileInfo').style.display = 'block';
+                    
+                    document.getElementById('rowCount').textContent = jsonData.length;
+                    document.getElementById('colCount').textContent = headers.length;
+                    document.getElementById('stats').style.display = 'grid';
+                    
+                    document.getElementById('chatInput').disabled = false;
+                    document.getElementById('sendBtn').disabled = false;
+                    
+                    addMessage('bot', `Great! I've loaded your data file with ${jsonData.length} rows and ${headers.length} columns. You can now ask me questions about your data.`);
+                    
+                } catch (error) {
+                    addMessage('bot', `Sorry, I couldn't load the file. Please make sure it's a valid data file.`);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function addMessage(sender, text) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const avatar = sender === 'user' ? '👤' : '🤖';
+            messageDiv.innerHTML = `
+                <div class="avatar">${avatar}</div>
+                <div class="message-content">${text}</div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const question = input.value.trim();
+            
+            if (!question) return;
+            
+            addMessage('user', question);
+            input.value = '';
+            
+            // Process question
+            setTimeout(() => {
+                const results = searchData(question);
+                if (results.length > 0) {
+                    results.forEach((result, index) => {
+                        addMessage('bot', result.cleanAnswer);
+                    });
+                } else {
+                    addMessage('bot', "I couldn't find any matching data. Try using different keywords or check your data file content.");
+                }
+            }, 500);
+        }
+        
+        function searchData(question) {
+            const keywords = question.toLowerCase().split(' ').filter(word => word.length > 2);
+            
+            const results = excelData.filter(row => {
+                const rowText = Object.values(row).join(' ').toLowerCase();
+                return keywords.some(keyword => rowText.includes(keyword));
+            }).slice(0, 3);
+            
+            // Format results to show clean answers
+            return results.map(row => {
+                if (row.answer) {
+                    return { cleanAnswer: row.answer };
+                } else {
+                    // For other data formats, show key-value pairs nicely
+                    const formatted = Object.entries(row)
+                        .filter(([key, value]) => key !== 'id')
+                        .map(([key, value]) => `${key}: ${value}`)
+                        .join(' | ');
+                    return { cleanAnswer: formatted };
+                }
+            });
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>

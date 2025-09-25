@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Excel Chatbot</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: Arial; margin: 20px; max-width: 800px; }
+        .chat-box { border: 1px solid #ccc; height: 400px; overflow-y: auto; padding: 10px; margin: 10px 0; background: #f9f9f9; }
+        .message { margin: 5px 0; padding: 5px; }
+        .user { background: #e3f2fd; border-radius: 5px; }
+        .bot { background: #f1f8e9; border-radius: 5px; }
+        input[type="text"] { width: 70%; padding: 8px; }
+        button { padding: 8px 15px; margin: 5px; }
+        .upload-area { border: 2px dashed #ccc; padding: 20px; text-align: center; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Excel Chatbot Demo</h1>
+    
+    <div class="upload-area">
+        <input type="file" id="fileInput" accept=".xlsx,.xls" style="margin: 10px;">
+        <button onclick="loadFile()">Load Excel File</button>
+        <div id="fileStatus"></div>
+    </div>
+    
+    <div>
+        <input type="text" id="questionInput" placeholder="Ask a question about your data..." disabled>
+        <button onclick="askQuestion()" id="askBtn" disabled>Ask</button>
+    </div>
+    
+    <div id="chatBox" class="chat-box"></div>
+
+    <script>
+        let excelData = [];
+        let headers = [];
+        
+        function loadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    excelData = jsonData;
+                    headers = Object.keys(jsonData[0] || {});
+                    
+                    document.getElementById('fileStatus').innerHTML = 
+                        `<p style="color: green;">✓ Loaded ${jsonData.length} rows with columns: ${headers.join(', ')}</p>`;
+                    
+                    document.getElementById('questionInput').disabled = false;
+                    document.getElementById('askBtn').disabled = false;
+                    
+                    addMessage('Bot: Excel file loaded successfully! You can now ask questions about your data.', 'bot');
+                } catch (error) {
+                    document.getElementById('fileStatus').innerHTML = 
+                        `<p style="color: red;">✗ Error loading file: ${error.message}</p>`;
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function askQuestion() {
+            const questionInput = document.getElementById('questionInput');
+            const question = questionInput.value.trim().toLowerCase();
+            
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+            
+            addMessage(`You: ${questionInput.value}`, 'user');
+            questionInput.value = '';
+            
+            // Simple keyword matching
+            const results = excelData.filter(row => {
+                const rowText = Object.values(row).join(' ').toLowerCase();
+                return question.split(' ').some(word => 
+                    word.length > 2 && rowText.includes(word)
+                );
+            }).slice(0, 3);
+            
+            if (results.length > 0) {
+                results.forEach((row, index) => {
+                    const answer = Object.entries(row)
+                        .map(([key, value]) => `${key}: ${value}`)
+                        .join(' | ');
+                    addMessage(`Bot: ${answer}`, 'bot');
+                });
+            } else {
+                addMessage('Bot: No matching data found. Try different keywords.', 'bot');
+            }
+        }
+        
+        function addMessage(message, type) {
+            const chatBox = document.getElementById('chatBox');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = message;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        
+        document.getElementById('questionInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                askQuestion();
+            }
+        });
+    </script>
+</body>
+</html>
