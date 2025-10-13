@@ -104,10 +104,6 @@ Interactive chat interface with file upload and real-time messaging
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
 ## 🆘 Support
 
 Having issues? Check out our [troubleshooting guide](docs/troubleshooting.md) or open an issue.
