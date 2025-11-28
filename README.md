@@ -16,7 +16,7 @@ A modern, responsive web application that transforms your spreadsheet data into 
 
 ## 🚀 Quick Start
 
-### Option 1: Frontend Only (Recommended)
+### Option 1: Frontend Only
 ```bash
 # Clone the repository
 git clone <your-repo-url>
