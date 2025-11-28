@@ -73,8 +73,7 @@ Try these sample questions with the included `example.xlsx`:
 
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)
 - **Data Processing**: SheetJS (xlsx library)
-- **Backend** (Optional): FastAPI, Python
-- **AI Integration** (Optional): OpenAI GPT
+- **Backend**: FastAPI, Python
 
 ## 📁 Project Structure
 
