@@ -64,10 +64,10 @@ uvicorn rag_main:app --reload --host 0.0.0.0 --port 8000
 
 Try these sample questions with the included `example.xlsx`:
 
-- "What are your business hours?"
-- "How do I reset my password?"
-- "What is your return policy?"
-- "Do you offer free shipping?"
+- What are your business hours?
+- How do I reset my password?
+- What is your return policy?
+- Do you offer free shipping?
 
 ## 🛠️ Tech Stack
 
