@@ -102,11 +102,6 @@ Interactive chat interface with file upload and real-time messaging
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-## 🆘 Support
-
-Having issues? Check out our [troubleshooting guide](docs/troubleshooting.md) or open an issue.
-
 ---
 
 ⭐ **Star this repo** if you find it helpful!
